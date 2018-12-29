@@ -5,7 +5,7 @@ import numpy as np
 import pandas as pd
 import requests
 
-Location = namedtuple('Location', 'id lat lon')
+Location = namedtuple('Location', 'id lat lon x y')
 
 data_path = 'osrm.csv'
 
@@ -18,19 +18,22 @@ def osrm_time_row(locations):
     return r.json()['durations'][0][1:]
 
 
-def osrm_time_matrix_batch_query(location_pair_list, query_limit=7):
+def osrm_time_matrix_batch_query(location_pair_list, query_limit=4_000):
     assert query_limit <= 8_000, "Limit over maximum allowed."
     assert query_limit >= 1, "Limit must be positive."
     assert query_limit == int(query_limit), " Limit must be integer."
     assert len(location_pair_list) > 0, "Not enough requests."
     location_pair_list = sorted(location_pair_list)
-    origin = location_pair_list[0][0]
+    origin = None
     destinations = []
+    n_pairs = len(location_pair_list)
+    progress_print = None
     for k, (loc1, loc2) in enumerate(location_pair_list):
         # check if origin changed
         if origin != loc1:
-            res = osrm_time_row([origin] + destinations)
-            save_response(origin, destinations, res)
+            if len(destinations) > 0:
+                res = osrm_time_row([origin] + destinations)
+                save_response(origin, destinations, res)
             origin = loc1
             destinations = [loc2]
         else:
@@ -39,7 +42,12 @@ def osrm_time_matrix_batch_query(location_pair_list, query_limit=7):
         if len(destinations) == query_limit or k + 1 == len(location_pair_list):
             res = osrm_time_row([origin] + destinations)
             save_response(origin, destinations, res)
+            origin = None
             destinations = []
+        progress = round((k + 1) / n_pairs * 100)
+        if progress != progress_print:
+            progress_print = progress
+            print(f'{progress_print}%')
     return None
 
 
@@ -70,5 +78,6 @@ def osrm_time_matrix(location_pair_list):
         new_location_pair_list = []
         for k, row in df_empties.iterrows():
             new_location_pair_list.append((locations[row.i], locations[row.j]))
-        osrm_time_matrix_batch_query(new_location_pair_list)
+        if len(new_location_pair_list) > 0:
+            osrm_time_matrix_batch_query(new_location_pair_list)
     return None
