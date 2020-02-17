@@ -3,13 +3,13 @@ from distutils.core import setup
 setup(
     name='industrialucn',
     packages=['industrialucn'],
-    version='0.1.2',
+    version='0.1.3',
     license='MIT',
     description='Industrial UCN',
     author='Hernan Caceres',
     author_email='industrial@ucn.cl',
     url='https://industrial.ucn.cl',
-    download_url='https://github.com/hernan-caceres/orlab-code/archive/0.1.2.tar.gz',
+    download_url='https://github.com/hernan-caceres/orlab-code/archive/0.1.3.tar.gz',
     keywords=['industrial', 'ucn', 'optimization', 'orlab', 'statistics'],
     install_requires=[
         'docplex',
