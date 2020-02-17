@@ -3,7 +3,7 @@ import logging
 from docplex.mp.model import Model
 
 
-def get_payoff_table(mdl: Model, objectives):
+def get_payoff_table_cplex(mdl: Model, objectives):
     payoff_table = {}
     p = len(objectives)
     for k in range(p):
@@ -23,7 +23,15 @@ def get_payoff_table(mdl: Model, objectives):
     return payoff_table
 
 
-def run_econstraint(mdl: Model, objectives, payoff_table, g=None):
+def run_econstraint(mdl: Model, objectives, g=None, optimizer='cplex'):
+    if optimizer == 'cplex':
+        pot = get_payoff_table_cplex(mdl, objectives)
+        return run_econstraint_cplex(mdl, objectives, pot, g)
+    else:
+        raise NotImplementedError
+
+
+def run_econstraint_cplex(mdl: Model, objectives, payoff_table, g=None):
     p = len(objectives)
     s = mdl.continuous_var_dict([k for k in range(1, p)], name='s')
     lb = {k: min(payoff_table[h, k] for h in range(p))
