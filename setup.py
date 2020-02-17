@@ -8,7 +8,7 @@ setup(
     description='Industrial UCN',
     author='Hernan Caceres',
     author_email='industrial@ucn.cl',
-    url='https://github.com/user/reponame',
+    url='https://industrial.ucn.cl',
     download_url='https://github.com/hernan-caceres/orlab-code/archive/0.1.1.tar.gz',
     keywords=['industrial', 'ucn', 'optimization', 'orlab', 'statistics'],
     install_requires=[
