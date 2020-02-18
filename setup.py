@@ -14,9 +14,12 @@ setuptools.setup(
     url="https://industrial.ucn.cl",
     packages=setuptools.find_packages(),
     classifiers=[
-        "Programming Language :: Python :: 3",
-        "License :: OSI Approved :: MIT License",
+        "Development Status :: 3 - Alpha",
+        "Intended Audience :: Science/Research",
+        "License :: Free for non-commercial use",
         "Operating System :: OS Independent",
+        "Programming Language :: Python :: 3.7",
+        "Topic :: Scientific/Engineering"
     ],
     python_requires='>=3.7',
 )
