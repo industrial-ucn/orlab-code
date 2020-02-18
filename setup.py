@@ -1,27 +1,22 @@
-from distutils.core import setup
+import setuptools
 
-setup(
-    name='industrialucn',
-    packages=['industrialucn'],
-    version='0.1.4',
-    license='MIT',
-    description='Industrial UCN',
-    author='Hernan Caceres',
-    author_email='industrial@ucn.cl',
-    url='https://industrial.ucn.cl',
-    download_url='https://github.com/hernan-caceres/orlab-code/archive/0.1.4.tar.gz',
-    keywords=['industrial', 'ucn', 'optimization', 'orlab', 'statistics'],
-    install_requires=[
-        'docplex',
-        'numpy',
-        'pandas',
-        'requests'
-    ],
+with open("README.md", "r") as fh:
+    long_description = fh.read()
+
+setuptools.setup(
+    name="industrialucn", # Replace with your own username
+    version="0.1.6",
+    author="Hernan Caceres",
+    author_email="idustrial@ucn.cl",
+    description="Generic tool for numerical experiments",
+    long_description=long_description,
+    long_description_content_type="text/markdown",
+    url="https://industrial.ucn.cl",
+    packages=setuptools.find_packages(),
     classifiers=[
-        'Development Status :: 3 - Alpha',
-        'Intended Audience :: Science/Research',
-        'Topic :: Education',
-        'License :: OSI Approved :: MIT License',
-        'Programming Language :: Python :: 3.7'
+        "Programming Language :: Python :: 3",
+        "License :: OSI Approved :: MIT License",
+        "Operating System :: OS Independent",
     ],
+    python_requires='>=3.7',
 )
