@@ -1,1 +1,1 @@
-from industrialucn.optimization.econstraint import run_econstraint
+from . import econstraint
