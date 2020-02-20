@@ -4,6 +4,7 @@ import unittest
 
 import numpy as np
 
+from industrialucn.optimization.econstraint import all_non_dominated
 from . import econstraint as ec
 
 
@@ -41,8 +42,8 @@ class EConstraint(unittest.TestCase):
         mdl = CplexModel()
 
         # define variables
-        x = mdl.binary_var_dict(parks, name='x')
-        y = mdl.binary_var_dict([(i, j) for i in buildings for j in parks], name='y')
+        x = mdl.continuous_var_dict(parks, name='x')
+        y = mdl.continuous_var_dict([(i, j) for i in buildings for j in parks], name='y')
 
         # define objective
         f1 = -mdl.sum(x[i] for i in parks)
@@ -67,9 +68,22 @@ class EConstraint(unittest.TestCase):
                            solution_extractor=extract_solution,
                            optimizer='cplex')
 
-        # print results
-        for v in pareto_frontier:
-            print(v)
+        def f(i, sol):
+            x, y = sol
+            if i == 0:
+                return sum(x[i] for i in parks)
+            elif i == 1:
+                return sum(distance[i, j] * y[i, j] for i in buildings for j in parks)
+            else:
+                return max(distance[i, j] * y[i, j] for i in buildings for j in parks)
+
+        fvs = [[f(i, sol) for i in range(3)] for sol in pareto_frontier]
+
+        for fv in fvs:
+            a, b, c = fv
+            print(f'{round(a, 1)}\t{round(b, 1)}\t{round(c, 1)}')
+
+        self.assertTrue(all_non_dominated(fvs))
 
     def test_run_econstraint_gurobi(self):
         from gurobipy import Model as GurobiModel
