@@ -146,12 +146,13 @@ def run_econstraint(model: Union[CplexModel, GurobiModel],
                     objectives: Union[List[LinearExpr], List[LinExpr]],
                     solution_extractor: Callable,
                     optimizer: str,
-                    g: Dict[int, int] = None) -> NoReturn:
+                    g: Dict[int, int] = None,
+                    payoff_table=None) -> NoReturn:
     if optimizer == 'cplex':
-        pot = _get_payoff_table_cplex(model, objectives)
+        pot = _get_payoff_table_cplex(model, objectives) if payoff_table is None else payoff_table
         return _run_econstraint_cplex(model, objectives, pot, g, solution_extractor=solution_extractor)
     elif optimizer == 'gurobi':
-        pot = _get_payoff_table_gurobi(model, objectives)
+        pot = _get_payoff_table_gurobi(model, objectives) if payoff_table is None else payoff_table
         return _run_econstraint_gurobi(model, objectives, pot, g, solution_extractor=solution_extractor)
     else:
         raise NotImplementedError(f'{optimizer} is not a valid optimizer; must be "cplex" or "gurobi"')
