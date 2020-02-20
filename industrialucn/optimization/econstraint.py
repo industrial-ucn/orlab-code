@@ -1,5 +1,5 @@
 import logging
-from typing import Union, List, Dict
+from typing import Union, List, Dict, Callable, NoReturn
 
 from docplex.mp.linear import LinearExpr
 from docplex.mp.model import Model as CplexModel
@@ -54,7 +54,8 @@ def _get_payoff_table_cplex(mdl: CplexModel, objectives: List[LinearExpr]):
     return payoff_table
 
 
-def get_payoff_table(mdl: Union[CplexModel, GurobiModel], objectives, optimizer=None):
+def get_payoff_table(mdl: Union[CplexModel, GurobiModel], objectives: Union[List[LinearExpr], List[LinExpr]],
+                     optimizer: str = None):
     if optimizer == 'cplex':
         return _get_payoff_table_cplex(mdl, objectives)
     elif optimizer == 'gurobi':
@@ -63,7 +64,8 @@ def get_payoff_table(mdl: Union[CplexModel, GurobiModel], objectives, optimizer=
         raise NotImplementedError
 
 
-def run_econstraint(mdl: Union[CplexModel, GurobiModel], objectives, g=None, optimizer=None):
+def run_econstraint(mdl: Union[CplexModel, GurobiModel], objectives: Union[List[LinearExpr], List[LinExpr]],
+                    g: Dict[int, int] = None, optimizer: str = None) -> NoReturn:
     if optimizer == 'cplex':
         pot = _get_payoff_table_cplex(mdl, objectives)
         return _run_econstraint_cplex(mdl, objectives, pot, g)
@@ -74,7 +76,8 @@ def run_econstraint(mdl: Union[CplexModel, GurobiModel], objectives, g=None, opt
         raise NotImplementedError
 
 
-def _run_econstraint_gurobi(mdl: GurobiModel, objectives: List[LinExpr], payoff_table, g=None, sol_extractor=None):
+def _run_econstraint_gurobi(mdl: GurobiModel, objectives: List[LinExpr], payoff_table, g: Dict[int, int] = None,
+                            solution_extractor: Callable = None) -> NoReturn:
     p = len(objectives)
     s = mdl.addVars([k for k in range(1, p)], name='s')
     lb = {k: min(payoff_table[h, k] for h in range(p))
@@ -94,7 +97,7 @@ def _run_econstraint_gurobi(mdl: GurobiModel, objectives: List[LinExpr], payoff_
         constraints = mdl.addConstrs(objectives[k] - s[k] == e[k] for k in range(1, p))
         mdl.optimize()
         if mdl.SolCount > 0:
-            sol_extractor()
+            solution_extractor()
             logger.info('feasible')
         else:
             logger.info('not feasible')
@@ -110,7 +113,8 @@ def _run_econstraint_gurobi(mdl: GurobiModel, objectives: List[LinExpr], payoff_
                     break
 
 
-def _run_econstraint_cplex(mdl: CplexModel, objectives, payoff_table, g: Dict[int, int] = None, sol_extractor=None):
+def _run_econstraint_cplex(mdl: CplexModel, objectives, payoff_table, g: Dict[int, int] = None,
+                           solution_extractor: Callable = None) -> NoReturn:
     assert isinstance(g, int)
     assert g >= 2
     p = len(objectives)
@@ -132,7 +136,7 @@ def _run_econstraint_cplex(mdl: CplexModel, objectives, payoff_table, g: Dict[in
         constraints = mdl.add_constraints(objectives[k] - s[k] == e[k] for k in range(1, p))
         solution = mdl.solve()
         if solution is not None:
-            sol_extractor()
+            solution_extractor()
             logger.info('feasible')
         else:
             logger.info('not feasible')
