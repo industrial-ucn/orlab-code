@@ -9,7 +9,7 @@ from gurobipy import Model as GurobiModel
 logger = logging.getLogger('econstraint')
 
 
-def _get_payoff_table_gurobi(mdl: GurobiModel, objectives):
+def _get_payoff_table_gurobi(mdl: GurobiModel, objectives: List[LinExpr]):
     payoff_table = {}
     p = len(objectives)
     for k in range(p):
@@ -38,11 +38,13 @@ def _get_payoff_table_cplex(mdl: CplexModel, objectives: List[LinearExpr]):
     payoff_table = {}
     p = len(objectives)
     for k in range(p):
+        logger.info(f'Entering loop, k={k}')
         mdl.maximize(objectives[k])
         solution = mdl.solve()
         payoff_table[k, k] = solution.get_objective_value()
         constraints = [mdl.add_constraint(objectives[k] >= payoff_table[k, k])]
         for h in range(p):
+            logger.info(f'Entering loop, h={h}')
             if h != k:
                 mdl.maximize(objectives[h])
                 solution = mdl.solve()
@@ -50,6 +52,7 @@ def _get_payoff_table_cplex(mdl: CplexModel, objectives: List[LinearExpr]):
                 constraints.append(
                     mdl.add_constraint(objectives[h] >= payoff_table[k, h])
                 )
+        logger.info(f'About to remove constraints, k={k}')
         mdl.remove(constraints)
     return payoff_table
 
@@ -91,7 +94,7 @@ def _run_econstraint_gurobi(mdl: GurobiModel, objectives: List[LinExpr], payoff_
                     break
 
 
-def _run_econstraint_cplex(mdl: CplexModel, objectives, payoff_table, g: Dict[int, int] = None,
+def _run_econstraint_cplex(mdl: CplexModel, objectives: List[LinearExpr], payoff_table, g: Dict[int, int] = None,
                            solution_extractor: Callable = None) -> NoReturn:
     p = len(objectives)
     s = mdl.continuous_var_dict([k for k in range(1, p)], name='s')
