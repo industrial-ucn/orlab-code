@@ -9,7 +9,7 @@ from gurobipy import Model as GurobiModel
 logger = logging.getLogger()
 
 
-def get_payoff_table_gurobi(mdl: GurobiModel, objectives):
+def _get_payoff_table_gurobi(mdl: GurobiModel, objectives):
     payoff_table = {}
     p = len(objectives)
     for k in range(p):
@@ -34,7 +34,7 @@ def get_payoff_table_gurobi(mdl: GurobiModel, objectives):
     return payoff_table
 
 
-def get_payoff_table_cplex(mdl: CplexModel, objectives: List[LinearExpr]):
+def _get_payoff_table_cplex(mdl: CplexModel, objectives: List[LinearExpr]):
     payoff_table = {}
     p = len(objectives)
     for k in range(p):
@@ -56,19 +56,19 @@ def get_payoff_table_cplex(mdl: CplexModel, objectives: List[LinearExpr]):
 
 def get_payoff_table(mdl: Union[CplexModel, GurobiModel], objectives, optimizer=None):
     if optimizer == 'cplex':
-        return get_payoff_table_cplex(mdl, objectives)
+        return _get_payoff_table_cplex(mdl, objectives)
     elif optimizer == 'gurobi':
-        return get_payoff_table_gurobi(mdl, objectives)
+        return _get_payoff_table_gurobi(mdl, objectives)
     else:
         raise NotImplementedError
 
 
 def run_econstraint(mdl: Union[CplexModel, GurobiModel], objectives, g=None, optimizer=None):
     if optimizer == 'cplex':
-        pot = get_payoff_table_cplex(mdl, objectives)
+        pot = _get_payoff_table_cplex(mdl, objectives)
         return _run_econstraint_cplex(mdl, objectives, pot, g)
     elif optimizer == 'gurobi':
-        pot = get_payoff_table_gurobi(mdl, objectives)
+        pot = _get_payoff_table_gurobi(mdl, objectives)
         return _run_econstraint_gurobi(mdl, objectives, pot, g)
     else:
         raise NotImplementedError
@@ -110,7 +110,7 @@ def _run_econstraint_gurobi(mdl: GurobiModel, objectives: List[LinExpr], payoff_
                     break
 
 
-def _run_econstraint_cplex(mdl: CplexModel, objectives, payoff_table, g:Dict[int,int]=None, sol_extractor=None):
+def _run_econstraint_cplex(mdl: CplexModel, objectives, payoff_table, g: Dict[int, int] = None, sol_extractor=None):
     assert isinstance(g, int)
     assert g >= 2
     p = len(objectives)
