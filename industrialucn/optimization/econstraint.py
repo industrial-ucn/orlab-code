@@ -1,23 +1,26 @@
 import logging
-from typing import Union
+from typing import Union, List, Dict
 
+from docplex.mp.linear import LinearExpr
 from docplex.mp.model import Model as CplexModel
-from gurobipy import GRB
+from gurobipy import GRB, quicksum, LinExpr
 from gurobipy import Model as GurobiModel
+
+logger = logging.getLogger()
 
 
 def get_payoff_table_gurobi(mdl: GurobiModel, objectives):
     payoff_table = {}
     p = len(objectives)
     for k in range(p):
-        print(f'Entering loop, k={k}')
+        logger.info(f'Entering loop, k={k}')
         mdl.setObjective(objectives[k], sense=GRB.MAXIMIZE)
         mdl.optimize()
         payoff_table[k, k] = mdl.ObjVal
         # noinspection PyArgumentList
         constraints = [mdl.addConstr(objectives[k] >= payoff_table[k, k])]
         for h in range(p):
-            print(f'Entering loop, h={h}')
+            logger.info(f'Entering loop, h={h}')
             if h != k:
                 mdl.setObjective(objectives[h], sense=GRB.MAXIMIZE)
                 mdl.optimize()
@@ -26,12 +29,12 @@ def get_payoff_table_gurobi(mdl: GurobiModel, objectives):
                 constraints.append(
                     mdl.addConstr(objectives[h] >= payoff_table[k, h])
                 )
-        print(f'About to remove constraints, k={k}')
+        logger.info(f'About to remove constraints, k={k}')
         mdl.remove(constraints)
     return payoff_table
 
 
-def get_payoff_table_cplex(mdl: CplexModel, objectives):
+def get_payoff_table_cplex(mdl: CplexModel, objectives: List[LinearExpr]):
     payoff_table = {}
     p = len(objectives)
     for k in range(p):
@@ -51,41 +54,50 @@ def get_payoff_table_cplex(mdl: CplexModel, objectives):
     return payoff_table
 
 
-def run_econstraint(mdl: Union[CplexModel, GurobiModel], objectives, g=None, optimizer='cplex'):
+def get_payoff_table(mdl: Union[CplexModel, GurobiModel], objectives, optimizer=None):
+    if optimizer == 'cplex':
+        return get_payoff_table_cplex(mdl, objectives)
+    elif optimizer == 'gurobi':
+        return get_payoff_table_gurobi(mdl, objectives)
+    else:
+        raise NotImplementedError
+
+
+def run_econstraint(mdl: Union[CplexModel, GurobiModel], objectives, g=None, optimizer=None):
     if optimizer == 'cplex':
         pot = get_payoff_table_cplex(mdl, objectives)
-        return run_econstraint_cplex(mdl, objectives, pot, g)
-    else:
+        return _run_econstraint_cplex(mdl, objectives, pot, g)
+    elif optimizer == 'gurobi':
         pot = get_payoff_table_gurobi(mdl, objectives)
-        return pot  # TODO implement for gurobi
+        return _run_econstraint_gurobi(mdl, objectives, pot, g)
+    else:
+        raise NotImplementedError
 
 
-def run_econstraint_cplex(mdl: CplexModel, objectives, payoff_table, g=None):
+def _run_econstraint_gurobi(mdl: GurobiModel, objectives: List[LinExpr], payoff_table, g=None, sol_extractor=None):
     p = len(objectives)
-    s = mdl.continuous_var_dict([k for k in range(1, p)], name='s')
+    s = mdl.addVars([k for k in range(1, p)], name='s')
     lb = {k: min(payoff_table[h, k] for h in range(p))
           for k in range(1, p)}
     r = {k: max(payoff_table[h, k] for h in range(p)) - min(payoff_table[h, k] for h in range(p))
          for k in range(1, p)}
-    logging.debug('r: %s', r)
+    logger.debug('r: %s', r)
     epsilon = 1e-3
-    mdl.maximize(objectives[0] + epsilon * mdl.sum(s[k] / r[k] for k in range(1, p)))
+    mdl.setObjective(objectives[0] + epsilon * quicksum(s[k] / r[k] for k in range(1, p)), sense=GRB.MAXIMIZE)
     if g is None:
         g = {k: 3 for k in range(1, p)}  # default number of grid
-        logging.warning('using default grid g=3')
+        logger.warning('using default grid g=3')
     i = {k: 0 for k in range(1, p)}
-    frontier = []
     while True:
         e = {k: lb[k] + (i[k] * r[k]) / g[k] for k in range(1, p)}
-        print(i)
-        print(e)
-        constraints = mdl.add_constraints(objectives[k] - s[k] == e[k] for k in range(1, p))
-        solution = mdl.solve()
-        if solution is not None:
-            frontier.append(solution)
-            print('feasible')
+        logger.info(f'i: {i}, e: {e}')
+        constraints = mdl.addConstrs(objectives[k] - s[k] == e[k] for k in range(1, p))
+        mdl.optimize()
+        if mdl.SolCount > 0:
+            sol_extractor()
+            logger.info('feasible')
         else:
-            print('not feasible')
+            logger.info('not feasible')
         mdl.remove(constraints)
         if all(i[k] == g[k] for k in range(1, p)):
             break
@@ -96,4 +108,41 @@ def run_econstraint_cplex(mdl: CplexModel, objectives, payoff_table, g=None):
                 else:
                     i[k] += 1
                     break
-    return frontier
+
+
+def _run_econstraint_cplex(mdl: CplexModel, objectives, payoff_table, g:Dict[int,int]=None, sol_extractor=None):
+    assert isinstance(g, int)
+    assert g >= 2
+    p = len(objectives)
+    s = mdl.continuous_var_dict([k for k in range(1, p)], name='s')
+    lb = {k: min(payoff_table[h, k] for h in range(p))
+          for k in range(1, p)}
+    r = {k: max(payoff_table[h, k] for h in range(p)) - min(payoff_table[h, k] for h in range(p))
+         for k in range(1, p)}
+    logger.debug('r: %s', r)
+    epsilon = 1e-3
+    mdl.maximize(objectives[0] + epsilon * mdl.sum(s[k] / r[k] for k in range(1, p)))
+    if g is None:
+        g = {k: 3 for k in range(1, p)}  # default number of grid
+        logger.warning('using default grid g=3')
+    i = {k: 0 for k in range(1, p)}
+    while True:
+        e = {k: lb[k] + (i[k] * r[k]) / g[k] for k in range(1, p)}
+        logger.info(f'i: {i}, e: {e}')
+        constraints = mdl.add_constraints(objectives[k] - s[k] == e[k] for k in range(1, p))
+        solution = mdl.solve()
+        if solution is not None:
+            sol_extractor()
+            logger.info('feasible')
+        else:
+            logger.info('not feasible')
+        mdl.remove(constraints)
+        if all(i[k] == g[k] for k in range(1, p)):
+            break
+        else:
+            for k in range(1, p):
+                if i[k] == g[k]:
+                    i[k] = 0
+                else:
+                    i[k] += 1
+                    break
