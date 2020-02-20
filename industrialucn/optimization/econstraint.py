@@ -137,7 +137,7 @@ def get_payoff_table(mdl: Union[CplexModel, GurobiModel], objectives: Union[List
     elif optimizer == 'gurobi':
         return _get_payoff_table_gurobi(mdl, objectives)
     else:
-        raise NotImplementedError
+        raise NotImplementedError(f'{optimizer} is not a valid optimizer; must be "cplex" or "gurobi"')
 
 
 def run_econstraint(mdl: Union[CplexModel, GurobiModel], objectives: Union[List[LinearExpr], List[LinExpr]],
@@ -149,4 +149,4 @@ def run_econstraint(mdl: Union[CplexModel, GurobiModel], objectives: Union[List[
         pot = _get_payoff_table_gurobi(mdl, objectives)
         return _run_econstraint_gurobi(mdl, objectives, pot, g)
     else:
-        raise NotImplementedError
+        raise NotImplementedError(f'{optimizer} is not a valid optimizer; must be "cplex" or "gurobi"')
