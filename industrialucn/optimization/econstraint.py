@@ -1,9 +1,37 @@
 import logging
+from typing import Union
 
-from docplex.mp.model import Model
+from docplex.mp.model import Model as CplexModel
+from gurobipy import GRB
+from gurobipy import Model as GurobiModel
 
 
-def get_payoff_table_cplex(mdl: Model, objectives):
+def get_payoff_table_gurobi(mdl: GurobiModel, objectives):
+    payoff_table = {}
+    p = len(objectives)
+    for k in range(p):
+        print(f'Entering loop, k={k}')
+        mdl.setObjective(objectives[k], sense=GRB.MAXIMIZE)
+        mdl.optimize()
+        payoff_table[k, k] = mdl.ObjVal
+        # noinspection PyArgumentList
+        constraints = [mdl.addConstr(objectives[k] >= payoff_table[k, k])]
+        for h in range(p):
+            print(f'Entering loop, h={h}')
+            if h != k:
+                mdl.setObjective(objectives[h], sense=GRB.MAXIMIZE)
+                mdl.optimize()
+                payoff_table[k, h] = mdl.ObjVal
+                # noinspection PyArgumentList
+                constraints.append(
+                    mdl.addConstr(objectives[h] >= payoff_table[k, h])
+                )
+        print(f'About to remove constraints, k={k}')
+        mdl.remove(constraints)
+    return payoff_table
+
+
+def get_payoff_table_cplex(mdl: CplexModel, objectives):
     payoff_table = {}
     p = len(objectives)
     for k in range(p):
@@ -23,15 +51,16 @@ def get_payoff_table_cplex(mdl: Model, objectives):
     return payoff_table
 
 
-def run_econstraint(mdl: Model, objectives, g=None, optimizer='cplex'):
+def run_econstraint(mdl: Union[CplexModel, GurobiModel], objectives, g=None, optimizer='cplex'):
     if optimizer == 'cplex':
         pot = get_payoff_table_cplex(mdl, objectives)
         return run_econstraint_cplex(mdl, objectives, pot, g)
     else:
-        raise NotImplementedError
+        pot = get_payoff_table_gurobi(mdl, objectives)
+        return pot  # TODO implement for gurobi
 
 
-def run_econstraint_cplex(mdl: Model, objectives, payoff_table, g=None):
+def run_econstraint_cplex(mdl: CplexModel, objectives, payoff_table, g=None):
     p = len(objectives)
     s = mdl.continuous_var_dict([k for k in range(1, p)], name='s')
     lb = {k: min(payoff_table[h, k] for h in range(p))
