@@ -4,7 +4,7 @@ import unittest
 
 import numpy as np
 
-from industrialucn.optimization.econstraint import all_non_dominated
+from industrialucn.optimization.econstraint import is_pareto_efficient, all_weakly_non_dominated
 from . import econstraint as ec
 
 
@@ -42,8 +42,8 @@ class EConstraint(unittest.TestCase):
         mdl = CplexModel()
 
         # define variables
-        x = mdl.continuous_var_dict(parks, name='x')
-        y = mdl.continuous_var_dict([(i, j) for i in buildings for j in parks], name='y')
+        x = mdl.binary_var_dict(parks, name='x')
+        y = mdl.binary_var_dict([(i, j) for i in buildings for j in parks], name='y')
 
         # define objective
         f1 = -mdl.sum(x[i] for i in parks)
@@ -81,9 +81,11 @@ class EConstraint(unittest.TestCase):
 
         for fv in fvs:
             a, b, c = fv
-            print(f'{round(a, 1)}\t{round(b, 1)}\t{round(c, 1)}')
+            print(f'[{a:>5.1f}, {b:>7.1f}, {c:>5.1f}],')
 
-        self.assertTrue(all_non_dominated(fvs))
+        print(is_pareto_efficient(np.array(fvs)))
+
+        self.assertTrue(all_weakly_non_dominated(fvs))
 
     def test_run_econstraint_gurobi(self):
         from gurobipy import Model as GurobiModel
@@ -129,14 +131,32 @@ class EConstraint(unittest.TestCase):
         def extract_solution():
             xvals = {i: x[i].x for i in parks}
             yvals = {(i, j): y[i, j].x for i in buildings for j in parks}
-            solutions.append((xvals, yvals))
+            zval = z.x
+            solutions.append((xvals, yvals, zval))
 
         ec.run_econstraint(model=mdl,
                            objectives=objectives,
                            solution_extractor=extract_solution,
                            optimizer='gurobi')
 
-        print(solutions)
+        def f(i, sol):
+            x, y, z = sol
+            if i == 0:
+                return sum(x[i] for i in parks)
+            elif i == 1:
+                return sum(distance[i, j] * y[i, j] for i in buildings for j in parks)
+            else:
+                return z
+
+        fvs = [[f(i, sol) for i in range(3)] for sol in solutions]
+
+        for fv in fvs:
+            a, b, c = fv
+            print(f'[{a:>5.1f}, {b:>7.1f}, {c:>5.1f}],')
+
+        print(is_pareto_efficient(np.array(fvs)))
+
+        self.assertTrue(all_weakly_non_dominated(fvs))
 
 
 if __name__ == '__main__':
