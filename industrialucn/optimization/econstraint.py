@@ -6,7 +6,7 @@ from docplex.mp.model import Model as CplexModel
 from gurobipy import GRB, quicksum, LinExpr
 from gurobipy import Model as GurobiModel
 
-logger = logging.getLogger()
+logger = logging.getLogger('econstraint')
 
 
 def _get_payoff_table_gurobi(mdl: GurobiModel, objectives):
@@ -67,7 +67,7 @@ def _run_econstraint_gurobi(mdl: GurobiModel, objectives: List[LinExpr], payoff_
     mdl.setObjective(objectives[0] + epsilon * quicksum(s[k] / r[k] for k in range(1, p)), sense=GRB.MAXIMIZE)
     if g is None:
         g = {k: 3 for k in range(1, p)}  # default number of grid
-        logger.warning('using default grid g=3')
+        logger.warning('Using default grid g=3')
     i = {k: 0 for k in range(1, p)}
     while True:
         e = {k: lb[k] + (i[k] * r[k]) / g[k] for k in range(1, p)}
@@ -93,8 +93,6 @@ def _run_econstraint_gurobi(mdl: GurobiModel, objectives: List[LinExpr], payoff_
 
 def _run_econstraint_cplex(mdl: CplexModel, objectives, payoff_table, g: Dict[int, int] = None,
                            solution_extractor: Callable = None) -> NoReturn:
-    assert isinstance(g, int)
-    assert g >= 2
     p = len(objectives)
     s = mdl.continuous_var_dict([k for k in range(1, p)], name='s')
     lb = {k: min(payoff_table[h, k] for h in range(p))
@@ -106,7 +104,7 @@ def _run_econstraint_cplex(mdl: CplexModel, objectives, payoff_table, g: Dict[in
     mdl.maximize(objectives[0] + epsilon * mdl.sum(s[k] / r[k] for k in range(1, p)))
     if g is None:
         g = {k: 3 for k in range(1, p)}  # default number of grid
-        logger.warning('using default grid g=3')
+        logger.warning('Using default grid g=3')
     i = {k: 0 for k in range(1, p)}
     while True:
         e = {k: lb[k] + (i[k] * r[k]) / g[k] for k in range(1, p)}
