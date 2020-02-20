@@ -1,6 +1,7 @@
 import logging
 from typing import Union, List, Dict, Callable, NoReturn
 
+import numpy as np
 from docplex.mp.linear import LinearExpr
 from docplex.mp.model import Model as CplexModel
 from gurobipy import GRB, quicksum, LinExpr
@@ -150,9 +151,11 @@ def run_econstraint(model: Union[CplexModel, GurobiModel],
                     payoff_table=None) -> NoReturn:
     if optimizer == 'cplex':
         pot = _get_payoff_table_cplex(model, objectives) if payoff_table is None else payoff_table
+        logger.debug(pot)
         return _run_econstraint_cplex(model, objectives, pot, g, solution_extractor=solution_extractor)
     elif optimizer == 'gurobi':
         pot = _get_payoff_table_gurobi(model, objectives) if payoff_table is None else payoff_table
+        logger.debug(pot)
         return _run_econstraint_gurobi(model, objectives, pot, g, solution_extractor=solution_extractor)
     else:
         raise NotImplementedError(f'{optimizer} is not a valid optimizer; must be "cplex" or "gurobi"')
@@ -160,7 +163,16 @@ def run_econstraint(model: Union[CplexModel, GurobiModel],
 
 def all_non_dominated(solution_list):
     for i, fi in enumerate(solution_list):
-        if any(all(fjk <= fik for fik, fjk in zip(fi, fj)) and any(fjk < fik for fik, fjk in zip(fi, fj))
+        if any(all(fjk < fik or np.isclose(fjk, fik) for fik, fjk in zip(fi, fj)) and
+               any(fjk < fik and not np.isclose(fjk, fik) for fik, fjk in zip(fi, fj))
+               for j, fj in enumerate(solution_list) if j != i):
+            return False
+    return True
+
+
+def all_weakly_non_dominated(solution_list):
+    for i, fi in enumerate(solution_list):
+        if any(all(fjk < fik and not np.isclose(fjk, fik) for fik, fjk in zip(fi, fj))
                for j, fj in enumerate(solution_list) if j != i):
             return False
     return True
