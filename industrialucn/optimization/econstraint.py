@@ -156,3 +156,11 @@ def run_econstraint(model: Union[CplexModel, GurobiModel],
         return _run_econstraint_gurobi(model, objectives, pot, g, solution_extractor=solution_extractor)
     else:
         raise NotImplementedError(f'{optimizer} is not a valid optimizer; must be "cplex" or "gurobi"')
+
+
+def all_non_dominated(solution_list):
+    for i, fi in enumerate(solution_list):
+        if any(all(fjk <= fik for fik, fjk in zip(fi, fj)) and any(fjk < fik for fik, fjk in zip(fi, fj))
+               for j, fj in enumerate(solution_list) if j != i):
+            return False
+    return True
