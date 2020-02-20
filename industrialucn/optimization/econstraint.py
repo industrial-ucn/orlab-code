@@ -54,28 +54,6 @@ def _get_payoff_table_cplex(mdl: CplexModel, objectives: List[LinearExpr]):
     return payoff_table
 
 
-def get_payoff_table(mdl: Union[CplexModel, GurobiModel], objectives: Union[List[LinearExpr], List[LinExpr]],
-                     optimizer: str = None):
-    if optimizer == 'cplex':
-        return _get_payoff_table_cplex(mdl, objectives)
-    elif optimizer == 'gurobi':
-        return _get_payoff_table_gurobi(mdl, objectives)
-    else:
-        raise NotImplementedError
-
-
-def run_econstraint(mdl: Union[CplexModel, GurobiModel], objectives: Union[List[LinearExpr], List[LinExpr]],
-                    g: Dict[int, int] = None, optimizer: str = None) -> NoReturn:
-    if optimizer == 'cplex':
-        pot = _get_payoff_table_cplex(mdl, objectives)
-        return _run_econstraint_cplex(mdl, objectives, pot, g)
-    elif optimizer == 'gurobi':
-        pot = _get_payoff_table_gurobi(mdl, objectives)
-        return _run_econstraint_gurobi(mdl, objectives, pot, g)
-    else:
-        raise NotImplementedError
-
-
 def _run_econstraint_gurobi(mdl: GurobiModel, objectives: List[LinExpr], payoff_table, g: Dict[int, int] = None,
                             solution_extractor: Callable = None) -> NoReturn:
     p = len(objectives)
@@ -150,3 +128,25 @@ def _run_econstraint_cplex(mdl: CplexModel, objectives, payoff_table, g: Dict[in
                 else:
                     i[k] += 1
                     break
+
+
+def get_payoff_table(mdl: Union[CplexModel, GurobiModel], objectives: Union[List[LinearExpr], List[LinExpr]],
+                     optimizer: str = None):
+    if optimizer == 'cplex':
+        return _get_payoff_table_cplex(mdl, objectives)
+    elif optimizer == 'gurobi':
+        return _get_payoff_table_gurobi(mdl, objectives)
+    else:
+        raise NotImplementedError
+
+
+def run_econstraint(mdl: Union[CplexModel, GurobiModel], objectives: Union[List[LinearExpr], List[LinExpr]],
+                    g: Dict[int, int] = None, optimizer: str = None) -> NoReturn:
+    if optimizer == 'cplex':
+        pot = _get_payoff_table_cplex(mdl, objectives)
+        return _run_econstraint_cplex(mdl, objectives, pot, g)
+    elif optimizer == 'gurobi':
+        pot = _get_payoff_table_gurobi(mdl, objectives)
+        return _run_econstraint_gurobi(mdl, objectives, pot, g)
+    else:
+        raise NotImplementedError
