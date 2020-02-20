@@ -130,23 +130,27 @@ def _run_econstraint_cplex(mdl: CplexModel, objectives, payoff_table, g: Dict[in
                     break
 
 
-def get_payoff_table(mdl: Union[CplexModel, GurobiModel], objectives: Union[List[LinearExpr], List[LinExpr]],
-                     optimizer: str = None):
+def get_payoff_table(model: Union[CplexModel, GurobiModel],
+                     objectives: Union[List[LinearExpr], List[LinExpr]],
+                     optimizer: str):
     if optimizer == 'cplex':
-        return _get_payoff_table_cplex(mdl, objectives)
+        return _get_payoff_table_cplex(model, objectives)
     elif optimizer == 'gurobi':
-        return _get_payoff_table_gurobi(mdl, objectives)
+        return _get_payoff_table_gurobi(model, objectives)
     else:
         raise NotImplementedError(f'{optimizer} is not a valid optimizer; must be "cplex" or "gurobi"')
 
 
-def run_econstraint(mdl: Union[CplexModel, GurobiModel], objectives: Union[List[LinearExpr], List[LinExpr]],
-                    g: Dict[int, int] = None, optimizer: str = None) -> NoReturn:
+def run_econstraint(model: Union[CplexModel, GurobiModel],
+                    objectives: Union[List[LinearExpr], List[LinExpr]],
+                    solution_extractor: Callable,
+                    optimizer: str,
+                    g: Dict[int, int] = None) -> NoReturn:
     if optimizer == 'cplex':
-        pot = _get_payoff_table_cplex(mdl, objectives)
-        return _run_econstraint_cplex(mdl, objectives, pot, g)
+        pot = _get_payoff_table_cplex(model, objectives)
+        return _run_econstraint_cplex(model, objectives, pot, g, solution_extractor=solution_extractor)
     elif optimizer == 'gurobi':
-        pot = _get_payoff_table_gurobi(mdl, objectives)
-        return _run_econstraint_gurobi(mdl, objectives, pot, g)
+        pot = _get_payoff_table_gurobi(model, objectives)
+        return _run_econstraint_gurobi(model, objectives, pot, g, solution_extractor=solution_extractor)
     else:
         raise NotImplementedError(f'{optimizer} is not a valid optimizer; must be "cplex" or "gurobi"')
