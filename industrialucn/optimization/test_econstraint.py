@@ -97,15 +97,18 @@ class EConstraint(unittest.TestCase):
         # define variables
         x = mdl.addVars(parks, vtype=GRB.BINARY, name='x')
         y = mdl.addVars([(i, j) for i in buildings for j in parks], vtype=GRB.BINARY, name='y')
+        z = mdl.addVars([0])[0]
 
         # define objective
         f1 = quicksum(-1 * x[i] for i in parks)
         f2 = quicksum(-1 * distance[i, j] * y[i, j] for i in buildings for j in parks)
-        objectives = [f1, f2]
+        f3 = 0 - z
+        objectives = [f1, f2, f3]
 
         # define constraints
         mdl.addConstrs(y[i, j] <= x[j] for i in buildings for j in parks)
         mdl.addConstrs(quicksum(y[i, j] for j in parks) >= 1 for i in buildings)
+        mdl.addConstrs(distance[i, j] * y[i, j] <= z for i in buildings for j in parks)
 
         solutions = []
 
