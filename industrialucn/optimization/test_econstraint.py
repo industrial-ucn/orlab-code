@@ -74,7 +74,7 @@ class EConstraint(unittest.TestCase):
         self.assertTrue(ec.all_weakly_non_dominated(v2))
         self.assertFalse(ec.all_weakly_non_dominated(v3))
 
-    def test_cplex_mip(self):
+    def test_run_econstraint_cplex_mip(self):
         from docplex.mp.model import Model as CplexModel
 
         config_logger(ec.logger, logging.DEBUG)
@@ -126,7 +126,7 @@ class EConstraint(unittest.TestCase):
 
         self.assertTrue(ec.all_weakly_non_dominated(fvs))
 
-    def test_cplex_lp(self):
+    def test_run_econstraint_cplex_lp(self):
         from docplex.mp.model import Model as CplexModel
 
         config_logger(ec.logger, logging.DEBUG)
