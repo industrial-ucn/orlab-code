@@ -4,7 +4,6 @@ import unittest
 
 import numpy as np
 
-from industrialucn.optimization.econstraint import all_weakly_non_dominated, all_non_dominated
 from . import econstraint as ec
 
 
@@ -67,13 +66,13 @@ class EConstraint(unittest.TestCase):
               [3.0, 2223.9, 82.5],
               [2.0, 2106.9, 74.8]]
 
-        self.assertTrue(all_non_dominated(v1))
-        self.assertFalse(all_non_dominated(v2))
-        self.assertFalse(all_non_dominated(v3))
+        self.assertTrue(ec.all_non_dominated(v1))
+        self.assertFalse(ec.all_non_dominated(v2))
+        self.assertFalse(ec.all_non_dominated(v3))
 
-        self.assertTrue(all_weakly_non_dominated(v1))
-        self.assertTrue(all_weakly_non_dominated(v2))
-        self.assertFalse(all_weakly_non_dominated(v3))
+        self.assertTrue(ec.all_weakly_non_dominated(v1))
+        self.assertTrue(ec.all_weakly_non_dominated(v2))
+        self.assertFalse(ec.all_weakly_non_dominated(v3))
 
     def test_cplex_mip(self):
         from docplex.mp.model import Model as CplexModel
@@ -125,7 +124,7 @@ class EConstraint(unittest.TestCase):
             a, b, c = fv
             print(f'[{a:>5.1f}, {b:>7.1f}, {c:>5.1f}],')
 
-        self.assertTrue(all_weakly_non_dominated(fvs))
+        self.assertTrue(ec.all_weakly_non_dominated(fvs))
 
     def test_cplex_lp(self):
         from docplex.mp.model import Model as CplexModel
@@ -177,7 +176,7 @@ class EConstraint(unittest.TestCase):
             a, b, c = fv
             print(f'[{a:>5.1f}, {b:>7.1f}, {c:>5.1f}],')
 
-        self.assertTrue(all_non_dominated(fvs))
+        self.assertTrue(ec.all_non_dominated(fvs))
 
     def test_run_econstraint_gurobi_mip(self):
         from gurobipy import Model as GurobiModel
@@ -230,7 +229,7 @@ class EConstraint(unittest.TestCase):
             a, b, c = fv
             print(f'[{a:>5.1f}, {b:>7.1f}, {c:>5.1f}],')
 
-        self.assertTrue(all_weakly_non_dominated(fvs))
+        self.assertTrue(ec.all_weakly_non_dominated(fvs))
 
     def test_run_econstraint_gurobi_lp(self):
         from gurobipy import Model as GurobiModel
@@ -283,7 +282,7 @@ class EConstraint(unittest.TestCase):
             a, b, c = fv
             print(f'[{a:>5.1f}, {b:>7.1f}, {c:>5.1f}],')
 
-        self.assertTrue(all_non_dominated(fvs))
+        self.assertTrue(ec.all_non_dominated(fvs))
 
 
 if __name__ == '__main__':
