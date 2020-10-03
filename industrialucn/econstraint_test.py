@@ -4,7 +4,7 @@ import unittest
 
 import numpy as np
 
-from . import econstraint as ec
+from industrialucn import econstraint as ec
 
 
 def config_logger(logger, level):
@@ -263,6 +263,7 @@ class EConstraint(unittest.TestCase):
             solutions.append((xvals, yvals, zval))
 
         ec.run_econstraint(model=mdl,
+
                            objectives=objectives,
                            solution_extractor=extract_solution,
                            optimizer='gurobi')
