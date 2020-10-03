@@ -4,7 +4,7 @@ with open("README.md", "r") as fh:
     long_description = fh.read()
 
 setuptools.setup(
-    name="industrialucn", # Replace with your own username
+    name="industrialucn",
     version="0.1.7",
     author="Hernan Caceres",
     author_email="idustrial@ucn.cl",
@@ -14,9 +14,12 @@ setuptools.setup(
     url="https://industrial.ucn.cl",
     packages=setuptools.find_packages(),
     classifiers=[
-        "Programming Language :: Python :: 3",
-        "License :: OSI Approved :: MIT License",
+        "Development Status :: 3 - Alpha",
+        "Intended Audience :: Science/Research",
+        "License :: Free for non-commercial use",
         "Operating System :: OS Independent",
+        "Programming Language :: Python :: 3.7",
+        "Topic :: Scientific/Engineering"
     ],
     python_requires='>=3.7',
 )
