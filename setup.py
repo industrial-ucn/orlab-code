@@ -5,9 +5,9 @@ with open("README.md", "r") as fh:
 
 setuptools.setup(
     name="industrialucn",
-    version="0.1.7",
+    version="0.2.0",
     author="Hernan Caceres",
-    author_email="idustrial@ucn.cl",
+    author_email="hcaceres@ucn.cl",
     description="Generic tool for numerical experiments",
     long_description=long_description,
     long_description_content_type="text/markdown",
